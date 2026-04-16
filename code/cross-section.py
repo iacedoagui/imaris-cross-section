@@ -1,16 +1,23 @@
+from datetime import datetime, timedelta
 import numpy as np
 from PIL import Image
-from imaris_ims_file_reader.ims import ims
+from imaris_ims_file_reader import ims
 
-# 1. Load the Imaris file
-# Replace 'your_file.ims' with the path to your actual file
-ims_path = '../data_files/your_file.ims'
-data = ims(ims_path)
+start = datetime.now()
+print(f"Started at: {start.strftime('%Y-%m-%d %H:%M:%S')}")
 
-# 2. Select specific channel and timepoint if applicable
-# data shape is typically (Time, Channel, Z, Y, X)
-# Here we take the first timepoint and first channel
-volume = data[0, 0, :, :, :]
+#Load file
+path = '/Volumes/Extreme SSD/Ivan/NeuN Af647 3.6x 22_029.ims'
+print(f"Loading IMS file: {path}")
+
+data = ims(path, ResolutionLevelLock=5)
+print(f"Data shape: {data.shape}")  # Should print (C, T, Z, Y, X)
+
+print(data)
+
+print(data.dtype)  # Check data typex
+volume = data[0, 0, 0:2235:200, 0:2997:200, 0:3738:200]
+print(f"Volume shape: {volume.shape}")  # Should print (Z, Y, X)
 
 # 3. Extract middle cross sections (Orthoslices)
 z_mid = volume.shape[0] // 2
@@ -35,3 +42,7 @@ def save_slice(array, filename):
 save_slice(slice_xy, "cross_section_xy.png")
 save_slice(slice_xz, "cross_section_xz.png")
 save_slice(slice_yz, "cross_section_yz.png")
+
+end = datetime.now()
+print(f"Finished at: {end.strftime('%Y-%m-%d %H:%M:%S')}")
+print(f"Total time: {end - start}")
