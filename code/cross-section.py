@@ -1,94 +1,73 @@
-# Code for Debugging, stress test and just trying things. Not serious code.
 # Ivan Acedo Aguilar
 
 from datetime import datetime, timedelta
 from tifffile import tifffile
-import numpy as np
-from PIL import Image
 from imaris_ims_file_reader import ims
+import numpy as np
+import os
 
-start = datetime.now()
-print(f"Started at: {start.strftime('%H:%M:%S')}\n")
+#Divide the data from the imaris file into several numpy arrays that I can work with individually.
+def get_volume(ims_data):
+    
+    z = ims_data.shape[2]
+    y = ims_data.shape[3]
+    x = ims_data.shape[4]
 
-#Load file
-path = "/mnt/e/IMS NeuN For Ivan - MQ/GLP1_NeuN_9x_missing_DONE.ims"
-print(f"Loading IMS file: {path}\n")
+    # Split data into 5 different numpy arrays
+    y1, y2, y3, y4 = y//5, 2*y//5, 3*y//5, 4*y//5
 
-data = ims(path, ResolutionLevelLock=0)
+    v0 = ims_data[0, 0, :, 0:y1, :]
+    v1 = ims_data[0, 0, :, y1:y2, :]
+    v2 = ims_data[0, 0, :, y2:y3, :]
+    v3 = ims_data[0, 0, :, y3:y4, :]
+    v4 = ims_data[0, 0, :, y4:y, :]
+    
+    return [v0, v1, v2, v3, v4]
 
-print(data)
-print(f"\nData shape: {data.shape}")
-print(f"Data type: {data.dtype}")
-print(f"Data dimensions: {data.ndim}")
-print(f"Data ResolutionLevelLock: {data.ResolutionLevelLock}")
-print(f"Data ResolutionLevels: {data.ResolutionLevels}")
-print(f"Data TimePoints: {data.TimePoints}")
-print(f"Data Channels: {data.Channels}")
-print(f"Data chunks: {data.chunks}")
-print(f"Data dimensions: {data.ndim}\n")
-
-
-#volume = data[0, 0, 0:(data.shape[2]-1):2, 0:(data.shape[3]-1):2, 0:(data.shape[4]-1):2]
-
-
-volume = np.zeros((3,(data.shape[2]-1)//3,(data.shape[3]-1)//3,(data.shape[4]-1)//3), np.uint16)
-
-volume[0] = data[0, 0, 0:((data.shape[2]-1)//3):1, 0:((data.shape[3]-1)//3):1, 0:((data.shape[4]-1)//3):1]
-volume[1] = data[0, 0, ((data.shape[2]-1)//3):(((data.shape[2]-1)//3)*2):1, ((data.shape[3]-1)//3):(((data.shape[3]-1)//3)*2):1, ((data.shape[4]-1)//3):(((data.shape[4]-1)//3)*2):1]
-volume[2] = data[0, 0, (((data.shape[2]-1)//3)*2):(((data.shape[2]-1)//3)*3):1, (((data.shape[3]-1)//3)*2):(((data.shape[3]-1)//3)*3):1, (((data.shape[4]-1)//3)*2):(((data.shape[4]-1)//3)*3):1]
-
-
-print(f"\nVolume shape: {volume.shape}")  # Should print (Z, Y, X)
-
-
-print(f"Min: {volume.min()}, Max: {volume.max()}\n")
-
-# 3. Extract middle cross sections (Orthoslices)
-z_mid = volume.shape[0] // 2
-y_mid = volume.shape[1] // 2
-x_mid = volume.shape[2] // 2
-
-y_mid = [50, 60]
-
-# XY plane (Z-slice)
-slice_xy = volume[1, z_mid, :, :]
-# XZ plane (Y-slice)
-slice_xz = volume[1, :, y_mid, :]
-# YZ plane (X-slice)
-slice_yz = volume[1, :, :, x_mid]
-
-# 4. Save slices as images
-def save_slice(array, filename):
-    # Convert to float for safe normalization
-    slice_float = array.astype(np.float32)
-
-    # Normalize to 0–1
-    min_val = np.min(slice_float)
-    max_val = np.max(slice_float)
+def get_slice(slice):
+    # Normalize values
+    slice_float = slice.astype(np.float32)
+    min_val = slice_float.min()
+    max_val = slice_float.max()
 
     if max_val > min_val:
         norm = (slice_float - min_val) / (max_val - min_val)
     else:
         norm = np.zeros_like(slice_float)
 
-    # Scale to uint16
     slice_uint16 = (norm * 65535).astype(np.uint16)
 
-    # Save as TIFF
-    tifffile.imwrite(filename, slice_uint16)
+    return slice_uint16
+
+def main(path = "", res = 5):
     
-    #img = Image.fromarray(slice_uint16)
-    #img.save(filename)
+    #If the file exists get the file data
+    if os.path.exists(path):
+        ims_data = ims(path, res)
+        print(f"\nImaris file Data Shape = {ims_data.shape}")
+    else: 
+        print("\nNo valid .ims file")
+        return
+    
+    volume = get_volume(ims_data) #Retrieve a list of numpy arrays containing ims_data
+    print(f"\nVolume shape: {volume.shape}")  # Should print (Z, Y, X)
+    
+    #Do a loop???? or something to iterate through the list and get each one of the slices
+    vol_slice = get_slice(volume)
+    
+    filename = ""
+    
+    tifffile.imwrite(filename, vol_slice)
+    
+    return
 
-    print(f"Saved: {filename}")
-
-save_slice(slice_xy, "cross_section_xy_Res_0_Num_2.tiff")
-save_slice(slice_xz, "cross_section_xz_Res_0_Num_2.tiff")
-save_slice(slice_yz, "cross_section_yz_Res_0_Num_2.tiff")
-
-print(f"Data is a Numpy array = {isinstance(data, np.ndarray)}")
-print(f"Volume is a Numpy array = {isinstance(volume, np.ndarray)}")
-
-end = datetime.now()
-print(f"\nFinished at: {end.strftime('%H:%M:%S')}")
-print(f"Total time: {end - start}")
+if __name__ == "__main__":   
+     
+    #Print starting time
+    start = datetime.now()
+    print(f"Started at: {start.strftime('%H:%M:%S')}\n")
+    
+    path = "" #Path to .ims file
+    res = 0 # ResolutionLockLevel 0 highest, 8 lowest
+    
+    main(path, res)
