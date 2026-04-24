@@ -32,15 +32,17 @@ def save_slice(array, filename):
 
     print(f"Saved: {filename}")
 
+count = 3
+res = 0
 
 start = datetime.now()
 print(f"Started at: {start.strftime('%H:%M:%S')}\n")
 
 #Load file
-path = "/mnt/e/IMS NeuN For Ivan - MQ/GLP1_NeuN_9x_missing_DONE.ims"
+path = "/mnt/d/Jeremy/20241209_15_52_55_24_014_Hindbrain_lectin488+NeuN_Destripe_DONE/24_014_Lectin488+NeuN647.ims"
 print(f"Loading IMS file: {path}\n")
 
-ims_data = ims(path, ResolutionLevelLock=2)
+ims_data = ims(path, ResolutionLevelLock=res)
 
 print(ims_data)
 print(f"\nData shape: {ims_data.shape}")
@@ -62,43 +64,115 @@ y = ims_data.shape[3]
 x = ims_data.shape[4]
 
 # Split data into 5 different numpy arrays
-z1, z2, z3, z4 = z//5, 2*z//5, 3*z//5, 4*z//5
+z1 = z // 20
+z2 = 2 * z // 20
+z3 = 3 * z // 20
+z4 = 4 * z // 20
+z5 = 5 * z // 20
+z6 = 6 * z // 20
+z7 = 7 * z // 20
+z8 = 8 * z // 20
+z9 = 9 * z // 20
+z10 = 10 * z // 20
+z11 = 11 * z // 20
+z12 = 12 * z // 20
+z13 = 13 * z // 20
+z14 = 14 * z // 20
+z15 = 15 * z // 20
+z16 = 16 * z // 20
+z17 = 17 * z // 20
+z18 = 18 * z // 20
+z19 = 19 * z // 20
 y1, y2, y3, y4 = y//5, 2*y//5, 3*y//5, 4*y//5
 x1, x2, x3, x4 = x//5, 2*x//5, 3*x//5, 4*x//5
 
-# ims_data[Time?, Channel, Z, X?, Y]
-v0 = 0 #ims_data[0, 0, :, , 0:y1]
-v1 = 0 #ims_data[0, 0, :, : y1:y2]
-v2 = ims_data[0, :, :, :, x2:x3]
-v3 = 0 #ims_data[0, 0, :, :, y3:y4]
-v4 = 0 #ims_data[0, 0, :, :, y4:y]
+# ims_data[Time?, Channel, Z, Y, X]
+for i in range(20):
+    volume = [None] * 20
 
-volume = [v0, v1, v2, v3, v4]
+    v0 = None
+    v1 = None
+    v2 = None
+    v3 = None
+    v4 = None
+    v5 = None
+    v6 = None
+    v7 = None
+    v8 = None
+    v9 = None
+    v10 = None
+    v11 = None
+    v12 = None
+    v13 = None
+    v14 = None
+    v15 = None
+    v16 = None
+    v17 = None
+    v18 = None
+    v19 = None
+
+    if i == 0:
+        v0 = ims_data[0, :, 0:z1, :, :]
+    elif i == 1:
+        v1 = ims_data[0, :, z1:z2, :, :]
+    elif i == 2:
+        v2 = ims_data[0, :, z2:z3, :, :]
+    elif i == 3:
+        v3 = ims_data[0, :, z3:z4, :, :]
+    elif i == 4:
+        v4 = ims_data[0, :, z4:z5, :, :]
+    elif i == 5:
+        v5 = ims_data[0, :, z5:z6, :, :]
+    elif i == 6:
+        v6 = ims_data[0, :, z6:z7, :, :]
+    elif i == 7:
+        v7 = ims_data[0, :, z7:z8, :, :]
+    elif i == 8:
+        v8 = ims_data[0, :, z8:z9, :, :]
+    elif i == 9:
+        v9 = ims_data[0, :, z9:z, :, :]
+    elif i == 10:
+        v10 = ims_data[0, :, 0:z1, :, :]
+    elif i == 11:
+        v11 = ims_data[0, :, z1:z2, :, :]
+    elif i == 12:
+        v12 = ims_data[0, :, z2:z3, :, :]
+    elif i == 13:
+        v13 = ims_data[0, :, z3:z4, :, :]
+    elif i == 14:
+        v14 = ims_data[0, :, z4:z5, :, :]
+    elif i == 15:
+        v15 = ims_data[0, :, z5:z6, :, :]
+    elif i == 16:
+        v16 = ims_data[0, :, z6:z7, :, :]
+    elif i == 17:
+        v17 = ims_data[0, :, z7:z8, :, :]
+    elif i == 18:
+        v18 = ims_data[0, :, z8:z9, :, :]
+    elif i == 19:
+        v19 = ims_data[0, :, z9:z, :, :]
+
+    volume = [v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20]
 
 
-#print(f"\nVolume shape: {volume.shape}")  # Should print (Z, Y, X)
 
+    print(f"\nVolume shape: {volume[i].shape}")  # Should print (c, Z, Y, X)
 
-print(f"Min: {volume[2].min()}, Max: {volume[2].max()}\n")
+    # 3. Extract middle cross sections (Orthoslices)
+    z_mid = volume[i].shape[1] // 2
+    y_mid = volume[i].shape[2] // 2
+    x_mid = volume[i].shape[3] // 2
 
-# 3. Extract middle cross sections (Orthoslices)
-z_mid = volume[2].shape[1] // 2
-y_mid = volume[2].shape[2] // 2
-x_mid = volume[2].shape[3] // 2
+    # XY plane (Z-slice)
+    slice_xy = volume[i][:, z_mid, :, :]
+    # XZ plane (Y-slice)
+    #slice_xz = volume[i][:, :, y_mid, :]
+    # YZ plane (X-slice)
+    #slice_yz = volume[2][:, :, :, x_mid]
 
-# XY plane (Z-slice)
-#slice_xy = volume[2][:, z_mid]
-# XZ plane (Y-slice)
-#slice_xz = volume[2][:, :, y_mid]
-# YZ plane (X-slice)
-slice_yz = volume[2][:, :, :, x_mid]
-
-#save_slice(slice_xy, "cross_section_xy_Res_0_Num_2.tiff")
-#save_slice(slice_xz, "cross_section_xz_Res_0_Num_2_Channel 4.tiff")
-save_slice(slice_yz, "cross_section_yz_Res_0_Num_2_W_.tiff")
-
-print(f"Data is a Numpy array = {isinstance(ims_data, np.ndarray)}")
-print(f"Volume is a Numpy array = {isinstance(volume, np.ndarray)}")
+    save_slice(slice_xy, f"24_014_Lectin488+NeuN647_{i}_xy_{count}.tiff")
+    #save_slice(slice_xz, f"24_014_Lectin488+NeuN647_{i}_xz_{count}.tiff")
+    #save_slice(slice_yz, f"24_014_Lectin488+NeuN647_{i}_yz_{count}.tiff")
 
 end = datetime.now()
 print(f"\nFinished at: {end.strftime('%H:%M:%S')}")
