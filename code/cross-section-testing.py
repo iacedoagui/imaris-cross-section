@@ -34,7 +34,7 @@ def save_slice(array, filename):
 
     print(f"Saved: {filename}")
 
-count = 5
+count = 7
 res = 0
 n_slices = 70
 
@@ -74,7 +74,7 @@ y1, y2, y3, y4 = y//5, 2*y//5, 3*y//5, 4*y//5
 x1, x2, x3, x4 = x//5, 2*x//5, 3*x//5, 4*x//5
 
 # ims_data[Time?, Channel, Z, Y, X]
-for i in range(20):
+for i in range(n_slices):
     start_t = datetime.now()
     print(f"\n------->Slice started at: {start_t.strftime('%H:%M:%S')}")
 
