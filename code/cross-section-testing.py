@@ -9,6 +9,8 @@ from imaris_ims_file_reader import ims
 
 # 4. Save slices as images
 def save_slice(array, filename):
+    
+
     # Convert to float for safe normalization
     slice_float = array.astype(np.float32)
 
@@ -32,15 +34,18 @@ def save_slice(array, filename):
 
     print(f"Saved: {filename}")
 
+count = 5
+res = 0
+n_slices = 70
 
 start = datetime.now()
 print(f"Started at: {start.strftime('%H:%M:%S')}\n")
 
 #Load file
-path = "/mnt/e/IMS NeuN For Ivan - MQ/GLP1_NeuN_9x_missing_DONE.ims"
+path = "/mnt/d/Jeremy/20241209_15_52_55_24_014_Hindbrain_lectin488+NeuN_Destripe_DONE/24_014_Lectin488+NeuN647.ims"
 print(f"Loading IMS file: {path}\n")
 
-ims_data = ims(path, ResolutionLevelLock=2)
+ims_data = ims(path, ResolutionLevelLock=res)
 
 print(ims_data)
 print(f"\nData shape: {ims_data.shape}")
@@ -62,43 +67,42 @@ y = ims_data.shape[3]
 x = ims_data.shape[4]
 
 # Split data into 5 different numpy arrays
-z1, z2, z3, z4 = z//5, 2*z//5, 3*z//5, 4*z//5
+
+z_splits = [i * z // n_slices for i in range(n_slices + 1)]
+
 y1, y2, y3, y4 = y//5, 2*y//5, 3*y//5, 4*y//5
 x1, x2, x3, x4 = x//5, 2*x//5, 3*x//5, 4*x//5
 
-# ims_data[Time?, Channel, Z, X?, Y]
-v0 = 0 #ims_data[0, 0, :, , 0:y1]
-v1 = 0 #ims_data[0, 0, :, : y1:y2]
-v2 = ims_data[0, :, :, :, x2:x3]
-v3 = 0 #ims_data[0, 0, :, :, y3:y4]
-v4 = 0 #ims_data[0, 0, :, :, y4:y]
+# ims_data[Time?, Channel, Z, Y, X]
+for i in range(20):
+    start_t = datetime.now()
+    print(f"\n------->Slice started at: {start_t.strftime('%H:%M:%S')}")
 
-volume = [v0, v1, v2, v3, v4]
+    slice_vol = ims_data[0, :, z_splits[i]:z_splits[i+1], :, :]
 
+    print(f"\nVolume shape: {slice_vol.shape}")  # Should print (c, Z, Y, X)
 
-#print(f"\nVolume shape: {volume.shape}")  # Should print (Z, Y, X)
+    # 3. Extract middle cross sections (Orthoslices)
+    z_mid = slice_vol.shape[1] // 2
+    y_mid = slice_vol.shape[2] // 2
+    x_mid = slice_vol.shape[3] // 2
 
+    # XY plane (Z-slice)
+    slice_xy = slice_vol[:, z_mid, :, :]
+    # XZ plane (Y-slice)
+    #slice_xz = volume[i][:, :, y_mid, :]
+    # YZ plane (X-slice)
+    #slice_yz = volume[2][:, :, :, x_mid]
 
-print(f"Min: {volume[2].min()}, Max: {volume[2].max()}\n")
+    save_slice(slice_xy, f"24_014_Lectin488+NeuN647_{i}_xy_{count}.tiff")
+    #save_slice(slice_xz, f"24_014_Lectin488+NeuN647_{i}_xz_{count}.tiff")
+    #save_slice(slice_yz, f"24_014_Lectin488+NeuN647_{i}_yz_{count}.tiff")
 
-# 3. Extract middle cross sections (Orthoslices)
-z_mid = volume[2].shape[1] // 2
-y_mid = volume[2].shape[2] // 2
-x_mid = volume[2].shape[3] // 2
+    del slice_vol
 
-# XY plane (Z-slice)
-#slice_xy = volume[2][:, z_mid]
-# XZ plane (Y-slice)
-#slice_xz = volume[2][:, :, y_mid]
-# YZ plane (X-slice)
-slice_yz = volume[2][:, :, :, x_mid]
-
-#save_slice(slice_xy, "cross_section_xy_Res_0_Num_2.tiff")
-#save_slice(slice_xz, "cross_section_xz_Res_0_Num_2_Channel 4.tiff")
-save_slice(slice_yz, "cross_section_yz_Res_0_Num_2_W_.tiff")
-
-print(f"Data is a Numpy array = {isinstance(ims_data, np.ndarray)}")
-print(f"Volume is a Numpy array = {isinstance(volume, np.ndarray)}")
+    end_t = datetime.now()
+    print(f"Slice finished at: {end_t.strftime('%H:%M:%S')}")
+    print(f"Total slice time: {end_t - start_t}<-------\n")
 
 end = datetime.now()
 print(f"\nFinished at: {end.strftime('%H:%M:%S')}")
