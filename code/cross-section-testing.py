@@ -88,11 +88,13 @@ for i in range(20):
     x_mid = slice_vol.shape[3] // 2
 
     # XY plane (Z-slice)
-    slice_xy = slice_vol[:, z_mid, :, :]
+    slice_xy = slice_vol[:, z_mid:z_mid+15, :, :]
     # XZ plane (Y-slice)
     #slice_xz = volume[i][:, :, y_mid, :]
     # YZ plane (X-slice)
     #slice_yz = volume[2][:, :, :, x_mid]
+    
+    slice_xy = slice_xy.max(axis=1)
 
     save_slice(slice_xy, f"24_014_Lectin488+NeuN647_{i}_xy_{count}.tiff")
     #save_slice(slice_xz, f"24_014_Lectin488+NeuN647_{i}_xz_{count}.tiff")
