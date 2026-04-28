@@ -53,11 +53,11 @@ def main(path = "", res = 5):
     print(f"\nVolume shape: {volume.shape}")  # Should print (Z, Y, X)
     
     #Do a loop???? or something to iterate through the list and get each one of the slices
-    vol_slice = get_slice(volume)
+    vol_slices = get_slice(volume)
     
     filename = ""
     
-    tifffile.imwrite(filename, vol_slice)
+    tifffile.imwrite(filename, vol_slices)
     
     return
 
