@@ -1,5 +1,4 @@
 # Ivan Acedo Aguilar
-
 from datetime import datetime, timedelta
 from tifffile import tifffile
 from imaris_ims_file_reader import ims

@@ -1,3 +1,6 @@
+# Code for Debugging, stress test and just trying things. Not serious code.
+# Ivan Acedo Aguilar
+
 from datetime import datetime, timedelta
 import numpy as np
 from skimage import io, exposure
@@ -5,28 +8,17 @@ from tifffile import tifffile
 from glob import glob
 import os
 
-def contrast_stretch(img):
-    img_float = img.astype(np.float32)
-
-    p1, p99 = np.percentile(img_float, (1.5, 98.5))  # robust range
-    stretched = (img_float - p1) / (p99 - p1)
-
-    return np.clip(stretched, 0, 1)
-
 def best_gamma_corr(img):
-    img_float = contrast_stretch(img)
-    if img_float.max() > 1:
-        img_float /= img_float.max()
+    img_float = img.astype(np.float32)
+    img_float /= img_float.max()
 
-    gamma_list = np.linspace(0.9, 1, 15)
+    gamma_list = np.linspace(0.5, 2, 15)
 
     best_score = -np.inf
     best_img = img_float
 
     for g in gamma_list:
         corrected = exposure.adjust_gamma(img_float, g)
-
-        # Use standard deviation as contrast metric
         score = corrected.std()
 
         if score > best_score:
@@ -43,11 +35,9 @@ def apply_gamma_and_save(image_paths):
 
         base, ext = os.path.splitext(path)
 
-        # Case 1: multi-page TIFF
         for i, page in enumerate(img):
             processed = best_gamma_corr(page)
 
-            # Convert back
             if img.dtype == np.uint16:
                 img_out = (processed * 65535).astype(np.uint16)
             else:
@@ -61,6 +51,6 @@ def apply_gamma_and_save(image_paths):
 
 
 
-image_list = glob("/Volumes/Extreme SSD/Ivan/Images/*.tiff")  # or .tiff, .png, etc.
+image_list = glob("/Volumes/Extreme SSD/Ivan/Images/2/*.tiff")  # or .tiff, .png, etc.
 
 apply_gamma_and_save(image_list)

@@ -7,26 +7,18 @@ import numpy as np
 from PIL import Image
 from imaris_ims_file_reader import ims
 
-# 4. Save slices as images
-def save_slice(array, filename):
-    
 
-    # Convert to float for safe normalization
+def save_cross(array, filename):
+    
     slice_float = array.astype(np.float32)
 
-    # Normalize to 0–1
     min_val = np.min(slice_float)
     max_val = np.max(slice_float)
 
-    if max_val > min_val:
-        norm = (slice_float - min_val) / (max_val - min_val)
-    else:
-        norm = np.zeros_like(slice_float)
+    norm = (slice_float - min_val) / (max_val - min_val)
 
-    # Scale to uint16
     slice_uint16 = (norm * 65535).astype(np.uint16)
 
-    # Save as TIFF
     tifffile.imwrite(filename, slice_uint16)
     
     #img = Image.fromarray(slice_uint16)
@@ -34,15 +26,14 @@ def save_slice(array, filename):
 
     print(f"Saved: {filename}")
 
-count = 5
-res = 0
-n_slices = 70
+count = 0
+res = 1
+n_slices = 20
 
 start = datetime.now()
 print(f"Started at: {start.strftime('%H:%M:%S')}\n")
 
-#Load file
-path = "/mnt/d/Jeremy/20241209_15_52_55_24_014_Hindbrain_lectin488+NeuN_Destripe_DONE/24_014_Lectin488+NeuN647.ims"
+path = "/Volumes/Extreme SSD/Ivan/GLP1_NeuN_9x_missing_DONE.ims"
 print(f"Loading IMS file: {path}\n")
 
 ims_data = ims(path, ResolutionLevelLock=res)
@@ -66,39 +57,46 @@ z = ims_data.shape[2]
 y = ims_data.shape[3]
 x = ims_data.shape[4]
 
-# Split data into 5 different numpy arrays
+# Split data
 
 z_splits = [i * z // n_slices for i in range(n_slices + 1)]
 
-y1, y2, y3, y4 = y//5, 2*y//5, 3*y//5, 4*y//5
-x1, x2, x3, x4 = x//5, 2*x//5, 3*x//5, 4*x//5
+y_splits = [i * y // n_slices for i in range(n_slices + 1)]
+
+x_splits = [i * x // n_slices for i in range(n_slices + 1)]
+
 
 # ims_data[Time?, Channel, Z, Y, X]
-for i in range(20):
+for i in range(n_slices):
     start_t = datetime.now()
     print(f"\n------->Slice started at: {start_t.strftime('%H:%M:%S')}")
 
-    slice_vol = ims_data[0, :, z_splits[i]:z_splits[i+1], :, :]
-
-    print(f"\nVolume shape: {slice_vol.shape}")  # Should print (c, Z, Y, X)
-
-    # 3. Extract middle cross sections (Orthoslices)
-    z_mid = slice_vol.shape[1] // 2
-    y_mid = slice_vol.shape[2] // 2
-    x_mid = slice_vol.shape[3] // 2
-
-    # XY plane (Z-slice)
-    slice_xy = slice_vol[:, z_mid:z_mid+15, :, :]
-    # XZ plane (Y-slice)
-    #slice_xz = volume[i][:, :, y_mid, :]
-    # YZ plane (X-slice)
-    #slice_yz = volume[2][:, :, :, x_mid]
+    #slice_vol = ims_data[0, :, z_splits[i]:z_splits[i+1], :, :]
+    slice_vol = ims_data[0, :, :, y_splits[i]:y_splits[i+1], :]
+    #slice_vol = ims_data[0, :, :, :, x_splits[i]:x_splits[i+1]]
     
-    slice_xy = slice_xy.max(axis=1)
 
-    save_slice(slice_xy, f"24_014_Lectin488+NeuN647_{i}_xy_{count}.tiff")
-    #save_slice(slice_xz, f"24_014_Lectin488+NeuN647_{i}_xz_{count}.tiff")
-    #save_slice(slice_yz, f"24_014_Lectin488+NeuN647_{i}_yz_{count}.tiff")
+
+    print(f"\nVolume shape: {slice_vol.shape}")  #(c, Z, Y, X)
+    
+    slice_vol = np.transpose(slice_vol,(0,2,1,3)) #Y
+    #slice_vol = np.transpose(slice_vol,(0,3,1,2)) #X
+    print(f"\nTransposed volume shape: {slice_vol.shape}")  #(c, Z, Y, X)
+
+    mid = slice_vol.shape[1] // 2
+    
+    #slice_xy = slice_vol[:, mid:mid+15, :, :]# (Z-slice)
+    #slice_xy = slice_xy.max(axis=1)
+    
+    slice_xz = slice_vol[:, mid:mid+15, :] # (Y-slice)
+    slice_xz = slice_xz.max(axis=1)
+    
+    #slice_yz = slice_vol[:, mid:mid+15, :, :]# (X-slice)
+    #slice_yz = slice_yz.max(axis=1)
+
+    #save_cross(slice_xy, f"GLP1_NeuN_9x_{i}_xy_{count}.tiff")
+    save_cross(slice_xz, f"GLP1_NeuN_9x_{i}_xz_{count}.tiff")
+    #save_cross(slice_yz, f"GLP1_NeuN_9x_{i}_yz_{count}.tiff")
 
     del slice_vol
 
